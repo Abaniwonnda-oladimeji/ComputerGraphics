@@ -3,6 +3,8 @@
 #include <vector>
 #include <chrono>
 #include <SDL.h>
+#include <cmath>
+
 
 struct Point2D { float x; float y; };
 struct Point3D { float x; float y; float z; };
@@ -63,12 +65,12 @@ Point3D rotateOnY(Point3D point)
     return rotatedPoint;
 }
 
-Point3D scaleOut(Point3D point)
+Point3D scaleOut(Point3D point, float scaleFactor)
 {
     Point3D scaledPoint;
-    scaledPoint.x = point.x * scaledValue;
-    scaledPoint.y = point.y * scaledValue;
-    scaledPoint.z = point.z * scaledValue;
+    scaledPoint.x = point.x * scaleFactor;
+    scaledPoint.y = point.y * scaleFactor;
+    scaledPoint.z = point.z * scaleFactor;
     return scaledPoint;
 }
 
@@ -81,13 +83,23 @@ void render2(std::vector<Point3D> points, std::vector<Edge> edges)
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 
+
     rotation = rotation + 1 * DeltaTime;
 
+    float minScale = 0.3f; // Minimum scale
+    float maxScale = 1.3f; // Maximum scale
+    float scaleSpeed = 0.004f; // Speed of zooming
+
+    float scaleFactor = minScale + ((maxScale - minScale) / 2.0f) * (sin(scaleSpeed * iterations) + 1.0f);
+
     for (auto& edge : edges) {
-        Point3D rotatedPointStart = rotateOnY(points[edge.start]);
-        Point3D rotatedPointEnd = rotateOnY(points[edge.end]);
-        Point2D start = projection2(rotatedPointStart);
-        Point2D end = projection2(rotatedPointEnd);
+ 
+
+        // Scale the rotated points
+        Point3D scaledPointStart = scaleOut(points[edge.start], scaleFactor);
+        Point3D scaledPointEnd = scaleOut(points[edge.end],scaleFactor);
+        Point2D start = projection2(scaledPointStart);
+        Point2D end = projection2(scaledPointEnd);
 
         SDL_RenderDrawLine(renderer, start.x, start.y, end.x, end.y);
     }
@@ -108,7 +120,7 @@ int main(int argc, char* argv[])
 {
     iterations = 0;
     //creates a centered window with 960 width and 540 height
-    window = SDL_CreateWindow("Cube Renderer No OOP", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 960, 540, 0);
+    window = SDL_CreateWindow("Pyramid Renderer No OOP", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 960, 540, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     SDL_GetWindowSize(window, &WindowSizeX, &WindowSizeY);
